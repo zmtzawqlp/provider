@@ -1,15 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
+import 'delegate_widget.dart';
 import 'listenable_provider.dart' show ListenableProvider;
 import 'provider.dart';
 
 /// Listens to a [ValueListenable] and expose its current value.
-class ValueListenableProvider<T> extends DeferredInheritedProvider<ValueListenable<T>, T> {
-  /// Creates a [ValueNotifier] using [create] and automatically dispose it
+class ValueListenableProvider<T> extends ValueDelegateWidget<ValueListenable<T>>
+    implements SingleChildCloneableWidget {
+  /// Creates a [ValueNotifier] using `create` and automatically dispose it
   /// when [ValueListenableProvider] is removed from the tree.
   ///
-  /// [create] must not be `null`.
+  /// `create` must not be `null`.
   ///
   /// {@macro provider.updateshouldnotify}
   ///
@@ -20,17 +22,19 @@ class ValueListenableProvider<T> extends DeferredInheritedProvider<ValueListenab
   /// kind of [Listenable].
   ValueListenableProvider({
     Key key,
-    @required Create<ValueNotifier<T>> create,
+    @Deprecated('Will be removed as part of 4.0.0, use update instead')
+        ValueBuilder<ValueNotifier<T>> builder,
+    @required ValueBuilder<ValueNotifier<T>> create,
     UpdateShouldNotify<T> updateShouldNotify,
-    bool lazy,
     Widget child,
-  }) : super(
+  }) : this._(
           key: key,
-          create: create,
-          lazy: lazy,
+          delegate: BuilderStateDelegate<ValueNotifier<T>>(
+            // ignore: deprecated_member_use_from_same_package
+            create ?? builder,
+            dispose: _dispose,
+          ),
           updateShouldNotify: updateShouldNotify,
-          startListening: _startListening(),
-          dispose: _dispose,
           child: child,
         );
 
@@ -53,27 +57,55 @@ class ValueListenableProvider<T> extends DeferredInheritedProvider<ValueListenab
     @required ValueListenable<T> value,
     UpdateShouldNotify<T> updateShouldNotify,
     Widget child,
-  }) : super.value(
+  }) : this._(
           key: key,
-          value: value,
+          delegate: SingleValueDelegate(value),
           updateShouldNotify: updateShouldNotify,
-          startListening: _startListening(),
           child: child,
         );
 
-  static void _dispose(BuildContext context, ValueListenable<Object> notifier) {
-    if (notifier is ValueNotifier) {
-      notifier.dispose();
-    }
+  ValueListenableProvider._({
+    Key key,
+    @required ValueStateDelegate<ValueListenable<T>> delegate,
+    this.updateShouldNotify,
+    this.child,
+  }) : super(key: key, delegate: delegate);
+
+  static void _dispose(BuildContext context, ValueNotifier notifier) {
+    notifier.dispose();
   }
 
-  static DeferredStartListening<ValueListenable<T>, T> _startListening<T>() {
-    return (_, setState, controller, __) {
-      setState(controller.value);
+  /// The widget that is below the current [ValueListenableProvider] widget in
+  /// the tree.
+  ///
+  /// {@macro flutter.widgets.child}
+  final Widget child;
 
-      final listener = () => setState(controller.value);
-      controller.addListener(listener);
-      return () => controller.removeListener(listener);
-    };
+  /// {@macro provider.updateshouldnotify}
+  final UpdateShouldNotify<T> updateShouldNotify;
+
+  @override
+  ValueListenableProvider<T> cloneWithChild(Widget child) {
+    return ValueListenableProvider._(
+      key: key,
+      delegate: delegate,
+      updateShouldNotify: updateShouldNotify,
+      child: child,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<T>(
+      valueListenable: delegate.value,
+      builder: (_, value, child) {
+        return InheritedProvider<T>(
+          value: value,
+          updateShouldNotify: updateShouldNotify,
+          child: child,
+        );
+      },
+      child: child,
+    );
   }
 }

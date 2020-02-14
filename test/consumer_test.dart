@@ -19,7 +19,8 @@ class Combined {
   final Widget child;
   final BuildContext context;
 
-  Combined(this.context, this.child, this.a, [this.b, this.c, this.d, this.e, this.f]);
+  Combined(this.context, this.child, this.a,
+      [this.b, this.c, this.d, this.e, this.f]);
 
   @override
   // ignore: hash_and_equals
@@ -41,15 +42,16 @@ void main() {
   final d = D();
   final e = E();
   final f = F();
-
-  final multiProviderNodes = [
-    Provider.value(value: a),
-    Provider.value(value: b),
-    Provider.value(value: c),
-    Provider.value(value: d),
-    Provider.value(value: e),
-    Provider.value(value: f),
-  ];
+  final provider = MultiProvider(
+    providers: [
+      Provider.value(value: a),
+      Provider.value(value: b),
+      Provider.value(value: c),
+      Provider.value(value: d),
+      Provider.value(value: e),
+      Provider.value(value: f),
+    ],
+  );
 
   final mock = ConsumerBuilderMock();
   setUp(() {
@@ -65,13 +67,11 @@ void main() {
       final child = Container();
 
       await tester.pumpWidget(
-        MultiProvider(
-          providers: multiProviderNodes,
-          child: Consumer<A>(
+        provider.cloneWithChild(
+          Consumer<A>(
             key: key,
-            builder: (context, value, child) {
-              return mock(Combined(context, child, value));
-            },
+            builder: (context, value, child) =>
+                mock(Combined(context, child, value)),
             child: child,
           ),
         ),
@@ -88,18 +88,14 @@ void main() {
     testWidgets('can be used inside MultiProvider', (tester) async {
       final key = GlobalKey();
 
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ...multiProviderNodes,
-            Consumer<A>(
-              key: key,
-              builder: (_, a, child) => Container(child: child),
-            )
-          ],
-          child: const Text('foo', textDirection: TextDirection.ltr),
-        ),
-      );
+      await tester.pumpWidget(MultiProvider(
+        providers: List.from(provider.providers)
+          ..add(Consumer<A>(
+            key: key,
+            builder: (_, a, child) => Container(child: child),
+          )),
+        child: const Text('foo', textDirection: TextDirection.ltr),
+      ));
 
       expect(find.text('foo'), findsOneWidget);
       expect(find.byType(Container), findsOneWidget);
@@ -113,11 +109,11 @@ void main() {
       final child = Container();
 
       await tester.pumpWidget(
-        MultiProvider(
-          providers: multiProviderNodes,
-          child: Consumer2<A, B>(
+        provider.cloneWithChild(
+          Consumer2<A, B>(
             key: key,
-            builder: (context, value, v2, child) => mock(Combined(context, child, value, v2)),
+            builder: (context, value, v2, child) =>
+                mock(Combined(context, child, value, v2)),
             child: child,
           ),
         ),
@@ -135,18 +131,14 @@ void main() {
     testWidgets('can be used inside MultiProvider', (tester) async {
       final key = GlobalKey();
 
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ...multiProviderNodes,
-            Consumer2<A, B>(
-              key: key,
-              builder: (_, a, b, child) => Container(child: child),
-            )
-          ],
-          child: const Text('foo', textDirection: TextDirection.ltr),
-        ),
-      );
+      await tester.pumpWidget(MultiProvider(
+        providers: List.from(provider.providers)
+          ..add(Consumer2<A, B>(
+            key: key,
+            builder: (_, a, b, child) => Container(child: child),
+          )),
+        child: const Text('foo', textDirection: TextDirection.ltr),
+      ));
 
       expect(find.text('foo'), findsOneWidget);
       expect(find.byType(Container), findsOneWidget);
@@ -159,11 +151,11 @@ void main() {
       final child = Container();
 
       await tester.pumpWidget(
-        MultiProvider(
-          providers: multiProviderNodes,
-          child: Consumer3<A, B, C>(
+        provider.cloneWithChild(
+          Consumer3<A, B, C>(
             key: key,
-            builder: (context, value, v2, v3, child) => mock(Combined(context, child, value, v2, v3)),
+            builder: (context, value, v2, v3, child) =>
+                mock(Combined(context, child, value, v2, v3)),
             child: child,
           ),
         ),
@@ -181,18 +173,14 @@ void main() {
     testWidgets('can be used inside MultiProvider', (tester) async {
       final key = GlobalKey();
 
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ...multiProviderNodes,
-            Consumer3<A, B, C>(
-              key: key,
-              builder: (_, a, b, c, child) => Container(child: child),
-            )
-          ],
-          child: const Text('foo', textDirection: TextDirection.ltr),
-        ),
-      );
+      await tester.pumpWidget(MultiProvider(
+        providers: List.from(provider.providers)
+          ..add(Consumer3<A, B, C>(
+            key: key,
+            builder: (_, a, b, c, child) => Container(child: child),
+          )),
+        child: const Text('foo', textDirection: TextDirection.ltr),
+      ));
 
       expect(find.text('foo'), findsOneWidget);
       expect(find.byType(Container), findsOneWidget);
@@ -205,11 +193,11 @@ void main() {
       final child = Container();
 
       await tester.pumpWidget(
-        MultiProvider(
-          providers: multiProviderNodes,
-          child: Consumer4<A, B, C, D>(
+        provider.cloneWithChild(
+          Consumer4<A, B, C, D>(
             key: key,
-            builder: (context, value, v2, v3, v4, child) => mock(Combined(context, child, value, v2, v3, v4)),
+            builder: (context, value, v2, v3, v4, child) =>
+                mock(Combined(context, child, value, v2, v3, v4)),
             child: child,
           ),
         ),
@@ -227,18 +215,14 @@ void main() {
     testWidgets('can be used inside MultiProvider', (tester) async {
       final key = GlobalKey();
 
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ...multiProviderNodes,
-            Consumer4<A, B, C, D>(
-              key: key,
-              builder: (_, a, b, c, d, child) => Container(child: child),
-            )
-          ],
-          child: const Text('foo', textDirection: TextDirection.ltr),
-        ),
-      );
+      await tester.pumpWidget(MultiProvider(
+        providers: List.from(provider.providers)
+          ..add(Consumer4<A, B, C, D>(
+            key: key,
+            builder: (_, a, b, c, d, child) => Container(child: child),
+          )),
+        child: const Text('foo', textDirection: TextDirection.ltr),
+      ));
 
       expect(find.text('foo'), findsOneWidget);
       expect(find.byType(Container), findsOneWidget);
@@ -251,11 +235,11 @@ void main() {
       final child = Container();
 
       await tester.pumpWidget(
-        MultiProvider(
-          providers: multiProviderNodes,
-          child: Consumer5<A, B, C, D, E>(
+        provider.cloneWithChild(
+          Consumer5<A, B, C, D, E>(
             key: key,
-            builder: (context, value, v2, v3, v4, v5, child) => mock(Combined(context, child, value, v2, v3, v4, v5)),
+            builder: (context, value, v2, v3, v4, v5, child) =>
+                mock(Combined(context, child, value, v2, v3, v4, v5)),
             child: child,
           ),
         ),
@@ -273,18 +257,14 @@ void main() {
     testWidgets('can be used inside MultiProvider', (tester) async {
       final key = GlobalKey();
 
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ...multiProviderNodes,
-            Consumer5<A, B, C, D, E>(
-              key: key,
-              builder: (_, a, b, c, d, e, child) => Container(child: child),
-            )
-          ],
-          child: const Text('foo', textDirection: TextDirection.ltr),
-        ),
-      );
+      await tester.pumpWidget(MultiProvider(
+        providers: List.from(provider.providers)
+          ..add(Consumer5<A, B, C, D, E>(
+            key: key,
+            builder: (_, a, b, c, d, e, child) => Container(child: child),
+          )),
+        child: const Text('foo', textDirection: TextDirection.ltr),
+      ));
 
       expect(find.text('foo'), findsOneWidget);
       expect(find.byType(Container), findsOneWidget);
@@ -297,9 +277,8 @@ void main() {
       final child = Container();
 
       await tester.pumpWidget(
-        MultiProvider(
-          providers: multiProviderNodes,
-          child: Consumer6<A, B, C, D, E, F>(
+        provider.cloneWithChild(
+          Consumer6<A, B, C, D, E, F>(
             key: key,
             builder: (context, value, v2, v3, v4, v5, v6, child) =>
                 mock(Combined(context, child, value, v2, v3, v4, v5, v6)),
@@ -320,18 +299,14 @@ void main() {
     testWidgets('can be used inside MultiProvider', (tester) async {
       final key = GlobalKey();
 
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ...multiProviderNodes,
-            Consumer6<A, B, C, D, E, F>(
-              key: key,
-              builder: (_, a, b, c, d, e, f, child) => Container(child: child),
-            )
-          ],
-          child: const Text('foo', textDirection: TextDirection.ltr),
-        ),
-      );
+      await tester.pumpWidget(MultiProvider(
+        providers: List.from(provider.providers)
+          ..add(Consumer6<A, B, C, D, E, F>(
+            key: key,
+            builder: (_, a, b, c, d, e, f, child) => Container(child: child),
+          )),
+        child: const Text('foo', textDirection: TextDirection.ltr),
+      ));
 
       expect(find.text('foo'), findsOneWidget);
       expect(find.byType(Container), findsOneWidget);

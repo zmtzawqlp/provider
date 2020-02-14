@@ -1,51 +1,7 @@
-# 4.0.4
-
-- Update the ProviderNotFoundException to remove outdated solution. (thanks @augustinreille)
-
-# 4.0.3
-
-- improved error message when `Provider.of` is called without specifying
-  `listen: false` outside of the widget tree.
-
-# 4.0.2
-
-- fix `Provider.of` returning the previous value instead of the new value
-  if called inside `didChangeDependencies`.
-- fixed an issue where `update` was unnecessarily called.
-
-# 4.0.1
-
-- stable release of 4.0.0-hotfix+1
-- fix some typos
-
-# 4.0.0-hotfix.1
-
-- removed the inference of the `listen` flag of `Provider.of` in favor of an exception in debug mode if `listen` is true when it shouldn't.
-
-  This is because it caused a critical performance issue. See https://github.com/rrousselGit/provider/issues/305
-
-# 4.0.0
-
-- `Selector` now deeply compares collections by default, and offers a `shouldRebuild`
-  to customize the rebuild behavior.
-- renamed `ProviderNotFoundError` to `ProviderNotFoundException`.
-  This allows calling `Provider.of` inside a `try/catch` without triggering a
-  warning.
-- update provider to work with Flutter 1.12.1
-- The creation and listening of objects using providers is now performed lazily.
-  This means that objects are created the first time the value is read instead of
-  the first time the provider is mounted.
-- ~~The `listen` argument of `Provider.of` is now automatically inferred.
-  It is no longer necessary to pass `listen: false` when calling `Provider.of`
-  outside of the widget tree.~~ removed by 4.0.0-hotfix. See https://github.com/rrousselGit/provider/issues/305
-- renamed `initialBuilder` & `builder` of `*ProxyProvider` to `create` & `update`
-- renamed `builder` of `*Provider` to `create`
-- added a `*ProxyProvider0` variant
-
 # 3.2.0
 
 - Deprecated "builder" of providers in favor to "create"
-- Deprecated "initialBuilder"/"builder" of proxy providers in favor of respectively
+- Deprecated "builder"/"initialBuilder" of proxy providers in favor of respectively
   "create" and "update"
 
 # 3.1.0

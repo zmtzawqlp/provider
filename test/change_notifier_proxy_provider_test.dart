@@ -27,67 +27,34 @@ void main() {
     builder: (context, combined, child) => combinedConsumerMock(combined),
   );
 
-  group('ListenableProxyProvider', () {
+  group('ChangeNotifierProxyProvider', () {
     test('throws if update is missing', () {
       expect(
-        () => ListenableProxyProvider<A, _ListenableCombined>(
+        () => ChangeNotifierProxyProvider<A, _ListenableCombined>(
           create: null,
           update: null,
         ),
         throwsAssertionError,
       );
     });
-    testWidgets(
-      'asserts that the created notifier has no listener',
-      (tester) async {
-        final notifier = ValueNotifier(0)..addListener(() {});
 
-        await tester.pumpWidget(MultiProvider(
+    testWidgets('works with null', (tester) async {
+      await tester.pumpWidget(
+        MultiProvider(
           providers: [
             Provider.value(value: 0),
-            ListenableProxyProvider<int, ValueNotifier<int>>(
-              create: null,
-              update: (_, __, ___) => notifier,
-              dispose: (_, __) {},
+            ChangeNotifierProxyProvider<int, ChangeNotifier>(
+              create: (_) => null,
+              update: (_, __, value) => value,
             )
           ],
           child: Container(),
-        ));
+        ),
+      );
 
-        expect(tester.takeException(), isAssertionError);
-      },
-    );
-    testWidgets(
-      'asserts that the created notifier has no listener after rebuild',
-      (tester) async {
-        await tester.pumpWidget(MultiProvider(
-          providers: [
-            Provider.value(value: 0),
-            ListenableProxyProvider<int, ValueNotifier<int>>(
-              create: null,
-              update: (_, __, ___) => ValueNotifier(0),
-              dispose: (_, __) {},
-            )
-          ],
-          child: Container(),
-        ));
+      await tester.pumpWidget(Container());
+    });
 
-        final notifier = ValueNotifier(0)..addListener(() {});
-        await tester.pumpWidget(MultiProvider(
-          providers: [
-            Provider.value(value: 1),
-            ListenableProxyProvider<int, ValueNotifier<int>>(
-              create: null,
-              update: (_, __, ___) => notifier,
-              dispose: (_, __) {},
-            )
-          ],
-          child: Container(),
-        ));
-
-        expect(tester.takeException(), isAssertionError);
-      },
-    );
     testWidgets('rebuilds dependendents when listeners are called',
         (tester) async {
       final notifier = ValueNotifier(0);
@@ -95,7 +62,7 @@ void main() {
         MultiProvider(
           providers: [
             Provider.value(value: 0),
-            ListenableProxyProvider<int, ValueNotifier<int>>(
+            ChangeNotifierProxyProvider<int, ValueNotifier<int>>(
               create: (_) => notifier,
               update: (_, count, value) => value..value = count,
             )
@@ -118,96 +85,35 @@ void main() {
       expect(find.text('1'), findsOneWidget);
       expect(find.text('0'), findsNothing);
     });
-    testWidgets(
-      'update returning a new Listenable disposes the previously created value'
-      ' and update dependents',
-      (tester) async {
-        final builder = MockConsumerBuilder<MockNotifier>();
-        when(builder(any, any, any)).thenReturn(Container());
-        final child = Consumer<MockNotifier>(builder: builder);
-
-        final dispose = DisposerMock<MockNotifier>();
-        final notifier = MockNotifier();
-        when(notifier.hasListeners).thenReturn(false);
-        await tester.pumpWidget(
-          MultiProvider(
-            providers: [
-              Provider.value(value: 0),
-              ListenableProxyProvider<int, MockNotifier>(
-                create: null,
-                update: (_, count, value) => notifier,
-                dispose: dispose,
-              )
-            ],
-            child: child,
-          ),
-        );
-
-        clearInteractions(builder);
-
-        final dispose2 = DisposerMock<MockNotifier>();
-        final notifier2 = MockNotifier();
-        when(notifier2.hasListeners).thenReturn(false);
-        await tester.pumpWidget(
-          MultiProvider(
-            providers: [
-              Provider.value(value: 1),
-              ListenableProxyProvider<int, MockNotifier>(
-                create: null,
-                update: (_, count, value) => notifier2,
-                dispose: dispose2,
-              )
-            ],
-            child: child,
-          ),
-        );
-
-        verify(builder(argThat(isNotNull), notifier2, null)).called(1);
-        verifyNoMoreInteractions(builder);
-        verify(dispose(argThat(isNotNull), notifier)).called(1);
-        verifyNoMoreInteractions(dispose);
-
-        await tester.pumpWidget(Container());
-
-        verify(dispose2(argThat(isNotNull), notifier2)).called(1);
-        verifyNoMoreInteractions(dispose);
-        verifyNoMoreInteractions(dispose2);
-      },
-    );
     testWidgets('disposes of created value', (tester) async {
-      final dispose = DisposerMock<ValueNotifier<int>>();
-      final notifier = ValueNotifier(0);
+      final notifier = MockNotifier();
+      when(notifier.hasListeners).thenReturn(false);
       final key = GlobalKey();
 
       await tester.pumpWidget(
         MultiProvider(
           providers: [
             Provider.value(value: 0),
-            ListenableProxyProvider<int, ValueNotifier<int>>(
+            ChangeNotifierProxyProvider<int, MockNotifier>(
               key: key,
               create: (_) => notifier,
-              update: (_, count, value) => value..value = count,
-              dispose: dispose,
+              update: (_, count, value) => value,
             )
           ],
           child: Container(),
         ),
       );
 
-      final context = key.currentContext;
-      verifyZeroInteractions(dispose);
-
       await tester.pumpWidget(Container());
 
-      verify(dispose(context, notifier)).called(1);
-      verifyNoMoreInteractions(dispose);
+      verify(notifier.dispose()).called(1);
     });
   });
 
-  group('ListenableProxyProvider variants', () {
+  group('ChangeNotifierProxyProvider variants', () {
     Finder findProxyProvider() => find
         .byWidgetPredicate((widget) => widget is ProxyProviderBase<Combined>);
-    testWidgets('ListenableProxyProvider2', (tester) async {
+    testWidgets('ChangeNotifierProxyProvider2', (tester) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
@@ -217,7 +123,7 @@ void main() {
             Provider.value(value: d),
             Provider.value(value: e),
             Provider.value(value: f),
-            ListenableProxyProvider2<A, B, _ListenableCombined>(
+            ChangeNotifierProxyProvider2<A, B, _ListenableCombined>(
               create: (_) => _ListenableCombined(null, null, null),
               update: (context, a, b, previous) =>
                   _ListenableCombined(context, previous, a, b),
@@ -236,7 +142,7 @@ void main() {
         ),
       ).called(1);
     });
-    testWidgets('ListenableProxyProvider3', (tester) async {
+    testWidgets('ChangeNotifierProxyProvider3', (tester) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
@@ -246,7 +152,7 @@ void main() {
             Provider.value(value: d),
             Provider.value(value: e),
             Provider.value(value: f),
-            ListenableProxyProvider3<A, B, C, _ListenableCombined>(
+            ChangeNotifierProxyProvider3<A, B, C, _ListenableCombined>(
               create: (_) => _ListenableCombined(null, null, null),
               update: (context, a, b, c, previous) =>
                   _ListenableCombined(context, previous, a, b, c),
@@ -265,7 +171,7 @@ void main() {
         ),
       ).called(1);
     });
-    testWidgets('ListenableProxyProvider4', (tester) async {
+    testWidgets('ChangeNotifierProxyProvider4', (tester) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
@@ -275,7 +181,7 @@ void main() {
             Provider.value(value: d),
             Provider.value(value: e),
             Provider.value(value: f),
-            ListenableProxyProvider4<A, B, C, D, _ListenableCombined>(
+            ChangeNotifierProxyProvider4<A, B, C, D, _ListenableCombined>(
               create: (_) => _ListenableCombined(null, null, null),
               update: (context, a, b, c, d, previous) =>
                   _ListenableCombined(context, previous, a, b, c, d),
@@ -294,7 +200,7 @@ void main() {
         ),
       ).called(1);
     });
-    testWidgets('ListenableProxyProvider5', (tester) async {
+    testWidgets('ChangeNotifierProxyProvider5', (tester) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
@@ -304,7 +210,7 @@ void main() {
             Provider.value(value: d),
             Provider.value(value: e),
             Provider.value(value: f),
-            ListenableProxyProvider5<A, B, C, D, E, _ListenableCombined>(
+            ChangeNotifierProxyProvider5<A, B, C, D, E, _ListenableCombined>(
               create: (_) => _ListenableCombined(null, null, null),
               update: (context, a, b, c, d, e, previous) =>
                   _ListenableCombined(context, previous, a, b, c, d, e),
@@ -323,7 +229,7 @@ void main() {
         ),
       ).called(1);
     });
-    testWidgets('ListenableProxyProvider6', (tester) async {
+    testWidgets('ChangeNotifierProxyProvider6', (tester) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
@@ -333,7 +239,7 @@ void main() {
             Provider.value(value: d),
             Provider.value(value: e),
             Provider.value(value: f),
-            ListenableProxyProvider6<A, B, C, D, E, F, _ListenableCombined>(
+            ChangeNotifierProxyProvider6<A, B, C, D, E, F, _ListenableCombined>(
               create: (_) => _ListenableCombined(null, null, null),
               update: (context, a, b, c, d, e, f, previous) =>
                   _ListenableCombined(context, previous, a, b, c, d, e, f),
